@@ -1,0 +1,14 @@
+# Secrets et configs non sanitizées
+.env
+*.key
+*.pem
+*-raw.conf
+ossec.conf.full
+
+# Captures brutes non filtrées (ne publier que les pcap nettoyés du réseau lab-net)
+*.pcapng.raw
+captures/raw/
+
+# Divers
+.DS_Store
+*.swp
