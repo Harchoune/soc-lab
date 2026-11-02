@@ -1,0 +1,28 @@
+<!--
+  Extraits de configuration de collecte (MODÈLE, à sanitizer avant tout commit réel).
+  Côté agent (Ubuntu-Lab) : /var/ossec/etc/ossec.conf
+
+  Ne jamais committer un ossec.conf complet contenant clés d'enregistrement,
+  IP publiques ou mots de passe. Ici, seuls les blocs <localfile> utiles.
+-->
+
+<!-- Journal système : capte arpwatch (lancé en service sur la victime) -->
+<localfile>
+  <log_format>syslog</log_format>
+  <location>/var/log/syslog</location>
+</localfile>
+
+<!-- Journal DHCP si dnsmasq/isc-dhcp tourne sur une VM du lab -->
+<localfile>
+  <log_format>syslog</log_format>
+  <location>/var/log/daemon.log</location>
+</localfile>
+
+<!--
+  Côté manager, déclarer la liste des serveurs DHCP autorisés :
+    /var/ossec/etc/lists/dhcp_authorized
+  Contenu (une entrée par serveur légitime) :
+    10.10.10.1:legitime
+  Puis référencer la liste dans ossec.conf du manager :
+    <ruleset><list>etc/lists/dhcp_authorized</list></ruleset>
+-->

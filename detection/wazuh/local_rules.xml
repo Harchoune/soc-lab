@@ -1,0 +1,53 @@
+<!--
+  Règles Wazuh personnalisées — détection d'attaques L2 sur lab-net.
+  À déposer dans /var/ossec/etc/rules/local_rules.xml sur le manager Wazuh,
+  puis redémarrer : systemctl restart wazuh-manager.
+
+  Hypothèses de collecte (voir ossec.conf.sample) :
+    - La victime remonte arpwatch et le journal dnsmasq/pfSense via le décodeur
+      ci-dessous (detection/wazuh/decoders.xml).
+    - Les plages d'ID 100100+ sont réservées aux règles locales (non utilisées par
+      les règles officielles).
+
+  ⚠️ Ces règles sont des MODÈLES à valider : les niveaux et expressions doivent être
+     ajustés aux logs réels capturés dans la VM (voir captures/TODO-PREUVE_wazuh.md).
+-->
+<group name="local,l2_attacks,">
+
+  <!-- ===== Scénario 1 : ARP spoofing / MITM (MITRE T1557.002) ===== -->
+
+  <!-- arpwatch signale un changement d'adresse MAC pour une IP connue -->
+  <rule id="100100" level="10">
+    <decoded_as>arpwatch</decoded_as>
+    <match>changed ethernet address|flip flop</match>
+    <description>ARP spoofing possible : changement de MAC pour une IP du lab (MITM).</description>
+    <mitre>
+      <id>T1557.002</id>
+    </mitre>
+    <group>arp_spoofing,</group>
+  </rule>
+
+  <!-- Nouvelle station ARP inattendue (optionnel, bruit plus élevé) -->
+  <rule id="100101" level="5">
+    <decoded_as>arpwatch</decoded_as>
+    <match>new station</match>
+    <description>Nouvelle adresse MAC observée sur lab-net (à corréler).</description>
+    <group>arp_spoofing,</group>
+  </rule>
+
+  <!-- ===== Scénario 2 : Rogue DHCP (MITRE T1557) ===== -->
+
+  <!-- Un serveur DHCP non autorisé a émis une offre.
+       Le décodeur extrait server_ip ; la liste cdb dhcp_authorized recense les
+       serveurs légitimes (ex. 10.10.10.1). -->
+  <rule id="100110" level="12">
+    <decoded_as>dhcp_offer</decoded_as>
+    <list field="server_ip" lookup="not_match_key">etc/lists/dhcp_authorized</list>
+    <description>Rogue DHCP : offre émise par un serveur non autorisé ($(server_ip)).</description>
+    <mitre>
+      <id>T1557</id>
+    </mitre>
+    <group>rogue_dhcp,</group>
+  </rule>
+
+</group>

@@ -1,0 +1,26 @@
+<!--
+  Décodeurs Wazuh personnalisés (modèle à valider sur logs réels).
+  À déposer dans /var/ossec/etc/decoders/local_decoder.xml sur le manager.
+
+  Objectif : extraire les champs utiles depuis
+    - arpwatch (syslog)
+    - les logs DHCP (dnsmasq côté rogue, ou pfSense/ISC dhcpd côté légitime)
+  Les expressions sont indicatives : les ajuster au format exact des logs capturés
+  (voir captures/TODO-PREUVE_wazuh.md).
+-->
+<decoder name="arpwatch">
+  <program_name>arpwatch</program_name>
+</decoder>
+
+<!-- Exemple de ligne dnsmasq-dhcp :
+     dnsmasq-dhcp[1234]: DHCPOFFER(eth0) 10.10.10.55 08:00:27:aa:bb:cc -->
+<decoder name="dhcp_offer">
+  <program_name>dnsmasq-dhcp|dhcpd</program_name>
+  <prematch>DHCPOFFER</prematch>
+</decoder>
+
+<decoder name="dhcp_offer_fields">
+  <parent>dhcp_offer</parent>
+  <regex>DHCPOFFER\S* (\d+.\d+.\d+.\d+) (\S+)</regex>
+  <order>client_ip, client_mac</order>
+</decoder>
